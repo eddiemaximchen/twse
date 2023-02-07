@@ -24,21 +24,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 # 期待元素出現要透過什麼方式指定，經常與 EC、WebDriverWait 一起使用
 from selenium.webdriver.common.by import By
-# 取得系統時間的工具
-from datetime import datetime
 # 強制停止/強制等待 (程式執行期間休息一下)
 from time import sleep
-# 處理下拉式選單的工具
-from selenium.webdriver.support.ui import Select
 # 隨機取得 User-Agent
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
+import requests
 
 ua = UserAgent()
 # 啟動瀏覽器工具的選項
 my_options = webdriver.ChromeOptions()
-# my_options.add_argument("--headless")                # 不開啟實體瀏覽器背景執行
+# my_options.add_argument("--headless")               # 不開啟實體瀏覽器背景執行
 my_options.add_argument("--start-maximized")         # 最大化視窗
 my_options.add_argument("--incognito")               # 開啟無痕模式
 my_options.add_argument("--disable-popup-blocking")  # 禁用彈出攔截
@@ -55,8 +52,6 @@ url = 'https://mops.twse.com.tw/mops/web/t05sr01_1'
 def visit():
     driver.get(url);
 
-
-# 下載檔案
 def chkinfo():
     try:
         # 強制等待
@@ -74,12 +69,25 @@ def chkinfo():
         html = urlopen(url)
         bs = BeautifulSoup(html.read(),'html.parser')
         Alltitle=bs.find_all('tr',{'class':'even'})
+        msg=""
         for title in Alltitle:
-            print(title.find('td').get_text())
+            msg=msg+title.find('td').get_text()+', '
+        Alltitle=bs.find_all('tr',{'class':'odd'})
+        for title in Alltitle:
+            msg=msg+title.find('td').get_text()+', '
     except TimeoutException:
         print("等待逾時，即將關閉瀏覽器…")
         driver.quit()
-
+    #發送到line
+    headers={
+        'Authorization':'Bearer 6wwku50yAt06aJGXNhQEuWz44fS8ojjG07Pxj2MEw1q', #line notify token
+        'Content-Type':'application/x-www-form-urlencoded'
+    }
+    payload={'message':'個股%s'%msg+'重大訊息'}
+    print(payload)
+    r=requests.post('https://notify-api.line.me/api/notify',headers=headers,params=payload)
+    return r.status_code
+    
 # 關閉瀏覽器
 def close():
     driver.quit()
@@ -88,4 +96,5 @@ def close():
 if __name__ == '__main__':
     visit()
     chkinfo()
-    #close()
+    close()
+    
