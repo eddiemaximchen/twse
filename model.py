@@ -1,6 +1,6 @@
+import csv
 import json
 import pandas as pd
-import numpy as np
 #指定選股起訖日期
 date_from='2011-01-03'
 date_to='2011-01-31'
@@ -10,29 +10,22 @@ div_floor=int(5)
 vol_floor=int(100)
 stock_open=int(20) #1月有20個營業日
 allstock=970
-#讀入每日本益比
-one_day_pe=[]
-one_day_pe=pd.read_csv('files/yieldbydate.csv',encoding='cp950',header=1)
+#取出本益比
+files=[]
+ratio={}
+with open('files/201101yield.csv',encoding='cp950') as file:
+    csvReader=csv.DictReader(file)
 
-pe_data=[]
-sum_pe=float(0)
-for i in one_day_pe:
-    sum_pe=float(sum_pe)+float(one_day_pe['本益比'][i])
-    pe_data.append({
-        'stockNo':str(one_day_pe['證券代號'][i]),
-        'peratio':one_day_pe['本益比'][i]
-    })
-avg_pe=sum_pe/allstock
+    for row in csvReader:
+        files.append(row)
+df=pd.DataFrame(files)
+ratio=df.to_dict()
+sum_pe=sum(ratio['本益比'].values())
+sum_div=sum(ratio['殖利率'].values())
 
-dividend_data=[]
-sum_div=float(0)
-for i in one_day_pe:
-    sum_div=float(sum_div)+float(one_day_pe['殖利率'][i])
-    dividend_data.append({
-        'stockNo':str(one_day_pe['證券代號'][i]),
-        'peratio':float(one_day_pe['殖利率'][i])
-    })
+ave_pe=sum_pe/allstock
 avg_div=sum_div/allstock
+
 # 取出成交量
 vol=pd.read_csv('files/market/FMTQIK_201101.csv',encoding='cp950')
 vol_data=[]
